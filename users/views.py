@@ -1,4 +1,7 @@
 from django.shortcuts import render
+from jobs.models import Job  # Correct import path
+from users.models import Job  # Incorrect
+
 
 # Create your views here.
 from rest_framework.generics import CreateAPIView

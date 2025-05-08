@@ -2,35 +2,23 @@ from rest_framework import serializers
 from .models import Job, Application
 
 class JobSerializer(serializers.ModelSerializer):
-    employer = serializers.StringRelatedField(read_only=True)
-    
     class Meta:
         model = Job
         fields = '__all__'
-        read_only_fields = ['created_date', 'employer']
+        read_only_fields = ['employer', 'created_date']
 
 class ApplicationSerializer(serializers.ModelSerializer):
-    applicant = serializers.StringRelatedField(read_only=True)
-    
     class Meta:
         model = Application
         fields = '__all__'
-        read_only_fields = ['date_applied', 'applicant']
+        read_only_fields = ['applicant', 'date_applied']
 
     def validate(self, data):
-        if self.context['request'].user.role != 'job_seeker':
-            raise serializers.ValidationError("Only job seekers can apply for jobs")
+        user = self.context['request'].user
+        if not hasattr(user, 'profile') or user.profile.role != 'job_seeker':
+            raise serializers.ValidationError("Only job seekers can apply.")
         return data
-    
-class ApplicationSerializer(serializers.ModelSerializer):
-    applicant = serializers.StringRelatedField(read_only=True)
-    
-    class Meta:
-        model = Application
-        fields = '__all__'
-        read_only_fields = ['date_applied', 'applicant']
 
-    def validate(self, data):
-        if self.context['request'].user.role != 'job_seeker':
-            raise serializers.ValidationError("Only job seekers can apply for jobs")
-        return data
+    def create(self, validated_data):
+        validated_data['applicant'] = self.context['request'].user
+        return super().create(validated_data)
